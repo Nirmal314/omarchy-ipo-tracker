@@ -23,10 +23,6 @@ Panel {
   readonly property color dim: Qt.darker(foreground, 1.35)
   readonly property string fontFamily: bar ? bar.fontFamily : Style.font.family
 
-  // Theme-aware for the bar button icon; the popup trend/graph keeps the
-  // static green/red via Model.trendColor().
-  readonly property color barIconColor: accent
-
   readonly property var visibleIpos: Model.processIpos(service.ipos, searchText, sortMode)
   readonly property var liveIpos: Model.liveOnly(visibleIpos)
   readonly property var upcomingIpos: Model.upcomingOnly(visibleIpos)
@@ -114,10 +110,8 @@ Panel {
 
       Text {
         anchors.verticalCenter: parent.verticalCenter
-        text: "\uf201"
-        color: root.barIconColor
-        font.family: root.fontFamily
-        font.pixelSize: Style.font.caption
+        text: "📈"
+        font.pixelSize: Style.fontPx(1.167)
       }
     }
   }
@@ -185,56 +179,24 @@ Panel {
             fontFamily: root.fontFamily
           }
 
-          Rectangle {
-            id: searchBox
+          TextField {
+            id: searchInput
             width: parent.width
-            height: Math.max(Style.space(34), searchInput.implicitHeight + Style.space(14))
-            radius: Math.max(6, Style.cornerRadius)
-            color: Qt.rgba(root.foreground.r, root.foreground.g, root.foreground.b, 0.06)
-            border.width: 1
-            border.color: searchInput.activeFocus
-              ? Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.6)
-              : Qt.rgba(root.foreground.r, root.foreground.g, root.foreground.b, 0.15)
-
-            Text {
-              id: searchGlyph
-              anchors.left: parent.left
-              anchors.verticalCenter: parent.verticalCenter
-              anchors.leftMargin: Style.space(12)
-              text: "\uf002"
-              color: root.dim
-              font.family: root.fontFamily
-              font.pixelSize: Style.font.caption
+            text: root.searchText
+            foreground: root.foreground
+            accent: root.accent
+            placeholderText: "Search IPOs by name…  ( / to focus · Esc/⌫ clears )"
+            onTextChanged: {
+              root.searchText = text
+              root.ensureFocus()
             }
-
-            TextInput {
-              id: searchInput
-              anchors.left: searchGlyph.right
-              anchors.right: parent.right
-              anchors.verticalCenter: parent.verticalCenter
-              anchors.leftMargin: Style.space(8)
-              anchors.rightMargin: Style.space(12)
-              text: root.searchText
-              color: root.foreground
-              selectionColor: root.accent
-              selectedTextColor: Qt.rgba(0, 0, 0, 0.9)
-              font.family: root.fontFamily
-              font.pixelSize: Style.font.bodySmall
-              clip: true
-              placeholderText: "Search IPOs by name…  ( / to focus · Esc/⌫ clears )"
-              placeholderTextColor: root.dim
-              onTextChanged: {
-                root.searchText = text
-                root.ensureFocus()
-              }
-              Keys.onPressed: function(event) {
-                var key = event.key
-                if (key === Qt.Key_Escape) { event.accepted = true; root.searchText = ""; root.searchBlur(); return }
-                if (key === Qt.Key_Tab || key === Qt.Key_Backtab) { event.accepted = true; root.cycleSort(); root.searchBlur(); return }
-                if (key === Qt.Key_Return || key === Qt.Key_Enter) { event.accepted = true; root.toggleFocused(); root.searchBlur(); return }
-                if (key === Qt.Key_Down) { event.accepted = true; root.focusMove(1); selectAll(); return }
-                if (key === Qt.Key_Up) { event.accepted = true; root.focusMove(-1); selectAll(); return }
-              }
+            Keys.onPressed: function(event) {
+              var key = event.key
+              if (key === Qt.Key_Escape) { event.accepted = true; root.searchText = ""; root.searchBlur(); return }
+              if (key === Qt.Key_Tab || key === Qt.Key_Backtab) { event.accepted = true; root.cycleSort(); root.searchBlur(); return }
+              if (key === Qt.Key_Return || key === Qt.Key_Enter) { event.accepted = true; root.toggleFocused(); root.searchBlur(); return }
+              if (key === Qt.Key_Down) { event.accepted = true; root.focusMove(1); selectAll(); return }
+              if (key === Qt.Key_Up) { event.accepted = true; root.focusMove(-1); selectAll(); return }
             }
           }
 
