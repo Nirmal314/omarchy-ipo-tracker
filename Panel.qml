@@ -55,6 +55,10 @@ Panel {
     if (!card || !scroll || !scroll.contentItem) return
     var view = scroll.contentItem
     var insets = Style.space(8)
+    if (root.visibleIpos.length && card.ipo && card.ipo.slug === root.visibleIpos[0].slug) {
+      view.contentY = 0
+      return
+    }
     var y = card.mapToItem(body, 0, 0).y
     if (y < view.contentY + insets) {
       view.contentY = y - insets
@@ -73,7 +77,10 @@ Panel {
   function searchFocus() {
     searchText = ""
     searchInput.forceActiveFocus()
-    Qt.callLater(function() { searchInput.selectAll() })
+    Qt.callLater(function() {
+      if (scroll && scroll.contentItem) scroll.contentItem.contentY = 0
+      searchInput.selectAll()
+    })
   }
   function searchBlur() {
     searchInput.focus = false
@@ -173,7 +180,6 @@ Panel {
             text: "Updated " + (service.lastUpdated.getTime() > 0 ? Qt.formatTime(service.lastUpdated, "h:mm:ss ap") : "never")
               + " · Sort: " + root.sortLabel
               + " · " + (service.refreshing ? "Refreshing…" : "R refresh")
-              + " · data: ipowatch.in"
             color: root.dim
             font.family: root.fontFamily
             font.pixelSize: Style.font.caption
@@ -532,39 +538,6 @@ Panel {
             }
           }
 
-          Row {
-            width: parent.width
-            spacing: Style.space(8)
-            visible: (ipo.rhp_url || ipo.drhp_url) !== ""
-
-            LinkChip {
-              text: "RHP"
-              url: ipo.rhp_url
-              enabled: ipo.rhp_url !== ""
-              foreground: root.foreground
-              accent: root.accent
-              dim: root.dim
-              fontFamily: root.fontFamily
-            }
-            LinkChip {
-              text: "DRHP"
-              url: ipo.drhp_url
-              enabled: ipo.drhp_url !== ""
-              foreground: root.foreground
-              accent: root.accent
-              dim: root.dim
-              fontFamily: root.fontFamily
-            }
-            LinkChip {
-              text: "GMP history on website"
-              url: "https://ipowatch.in/" + ipo.slug + "-ipo-gmp-grey-market-premium/"
-              enabled: true
-              foreground: root.foreground
-              accent: root.accent
-              dim: root.dim
-              fontFamily: root.fontFamily
-            }
-          }
         }
       }
 
@@ -655,6 +628,7 @@ Panel {
 
         delegate: Item {
           required property int index
+          required property var modelData
           width: spark.barW + spark.barGap
           height: plot.height
           x: index * (spark.barW + spark.barGap)
