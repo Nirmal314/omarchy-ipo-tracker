@@ -185,7 +185,7 @@ function sparkline(history) {
 // Chronological, normalized day points for the per-day GMP graph, each with a
 // hover label and day-over-day delta.
 function sparkDays(history) {
-  var list = Array.isArray(history) ? history : []
+  var list = (history && history.length > 0) ? history : []
   var chrono = []
   for (var i = list.length - 1; i >= 0; i--) {
     var entry = list[i] || {}
