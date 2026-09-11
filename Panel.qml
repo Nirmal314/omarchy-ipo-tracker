@@ -19,7 +19,7 @@ Panel {
 
   readonly property color foreground: bar ? bar.barForeground : Color.foreground
   readonly property color urgent: bar ? bar.urgent : Color.urgent
-  readonly property color accent: bar ? bar.accent : Color.accent
+  readonly property color accent: Color.accent
   readonly property color dim: Qt.darker(foreground, 1.35)
   readonly property string fontFamily: bar ? bar.fontFamily : Style.font.family
 
@@ -50,6 +50,18 @@ Panel {
     if (idx < 0) idx = dir > 0 ? -1 : visibleIpos.length
     idx = (idx + dir + visibleIpos.length) % visibleIpos.length
     focusedSlug = visibleIpos[idx].slug
+  }
+  function ensureCardVisible(card) {
+    if (!card || !scroll || !scroll.contentItem) return
+    var view = scroll.contentItem
+    var insets = Style.space(8)
+    var y = card.mapToItem(body, 0, 0).y
+    if (y < view.contentY + insets) {
+      view.contentY = y - insets
+    } else if (y + card.height > view.contentY + view.height - insets) {
+      view.contentY = y + card.height - (view.height - insets)
+    }
+    view.contentY = Math.max(0, Math.min(view.contentY, view.contentHeight - view.height))
   }
   function cycleSort() {
     sortMode = sortMode === "default" ? "pct" : (sortMode === "pct" ? "close" : "default")
@@ -300,6 +312,7 @@ Panel {
     readonly property bool expanded: root.expandedIpoSlug === ipo.slug
     readonly property bool hovered: cardHover.hovered
     readonly property bool focused: root.focusedSlug === ipo.slug
+    onFocusedChanged: if (focused) Qt.callLater(root.ensureCardVisible, card)
     spacing: Style.space(4)
 
     Rectangle {
@@ -746,6 +759,7 @@ Panel {
   }
 
   component LinkChip: Rectangle {
+    id: chip
     property string text: ""
     property string url: ""
     property bool enabled: true
@@ -769,8 +783,8 @@ Panel {
       id: chipText
       anchors.centerIn: parent
       textFormat: Text.PlainText
-      text: LinkChip.text + " ↗"
-      color: LinkChip.enabled ? foreground : Qt.darker(dim, 1.2)
+      text: chip.text + " ↗"
+      color: chip.enabled ? foreground : Qt.darker(dim, 1.2)
       font.family: fontFamily
       font.pixelSize: Style.font.caption
       font.bold: true
@@ -779,10 +793,10 @@ Panel {
     MouseArea {
       id: chipMouse
       anchors.fill: parent
-      enabled: LinkChip.enabled
+      enabled: chip.enabled
       hoverEnabled: true
       cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-      onClicked: if (enabled) Util.execArgv(["xdg-open", LinkChip.url])
+      onClicked: if (enabled) Util.execArgv(["xdg-open", chip.url])
     }
   }
 }
