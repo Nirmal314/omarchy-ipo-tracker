@@ -8,8 +8,8 @@ import "Model.js" as Model
 
 Panel {
   id: root
-  moduleName: "ipo-tracker"
-  ipcTarget: "ipo-tracker"
+  moduleName: "archer-nemo.ipo-tracker"
+  ipcTarget: "archer-nemo.ipo-tracker"
 
   property double nowMs: Date.now()
   property string expandedIpoSlug: ""
@@ -127,10 +127,10 @@ Panel {
       anchors.centerIn: parent
       spacing: Style.space(5)
 
-      Text {
+      ChartLineIcon {
         anchors.verticalCenter: parent.verticalCenter
-        text: "📈"
-        font.pixelSize: Style.fontPx(1.167)
+        iconSize: Style.font.icon
+        color: root.foreground
       }
     }
   }
