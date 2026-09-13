@@ -177,7 +177,7 @@ Panel {
 
           Text {
             width: parent.width
-            text: "Updated " + (service.lastUpdated.getTime() > 0 ? Qt.formatTime(service.lastUpdated, "h:mm:ss ap") : "never")
+            text: "Updated " + (service.lastUpdated.getTime() > 0 ? Qt.formatTime(service.lastUpdated, "h:mm:ss AP") : "never")
               + " · Sort: " + root.sortLabel
               + " · " + (service.refreshing ? "Refreshing…" : "R refresh")
             color: root.dim

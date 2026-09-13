@@ -89,8 +89,7 @@ function shortName(name, max) {
 function dateLabel(iso) {
   var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ""))
   if (!m) return ""
-  var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec"]
-  return months[Number(m[2]) - 1] + " " + m[3]
+  return m[3] + "/" + m[2] + "/" + m[1]
 }
 
 function closeRange(ipo) {
