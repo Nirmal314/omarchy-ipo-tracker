@@ -86,7 +86,7 @@ omarchy-shell shell rescanPlugins
 Check the widget's error line inside the open panel. Common causes: no network (the collector falls back to the cached snapshot), or `python3`/`curl` missing. The collector can be run by hand to see its raw output and exit status:
 
 ```sh
-~/.config/omarchy/plugins/omarchy-ipo-tracker/collector.sh
+~/.config/omarchy/plugins/omarchy-ipo-tracker/bin/collector.sh
 ```
 
 Saved edits under `~/.config/omarchy/plugins/` reload automatically. If they do not, force a rescan with `omarchy-shell shell rescanPlugins` or restart the shell with `omarchy restart shell`.

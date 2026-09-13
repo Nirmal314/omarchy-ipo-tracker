@@ -10,7 +10,7 @@ Item {
   property bool refreshing: false
   property string lastError: ""
   property date lastUpdated: new Date(0)
-  readonly property string collectorScript: decodeURIComponent(String(Qt.resolvedUrl("collector.sh")).replace(/^file:\/\//, ""))
+  readonly property string collectorScript: decodeURIComponent(String(Qt.resolvedUrl("bin/collector.sh")).replace(/^file:\/\//, ""))
   readonly property int refreshIntervalSec: intSetting("refreshIntervalSec", 600, 60, 86400)
 
   function setting(name, fallback) {

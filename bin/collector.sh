@@ -4,6 +4,7 @@
 set -uo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+PLUGIN_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd)"
 
 # Prefer the system python3; fall back to the session interpreter if present.
 PY=""
@@ -15,4 +16,4 @@ if [[ -z "$PY" ]]; then
   exit 0
 fi
 
-exec "$PY" "$SCRIPT_DIR/collector.py"
+exec "$PY" "$PLUGIN_DIR/collector.py"
