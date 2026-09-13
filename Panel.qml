@@ -75,12 +75,16 @@ Panel {
     if (focusedSlug) expandedIpoSlug = expandedIpoSlug === focusedSlug ? "" : focusedSlug
   }
   function searchFocus() {
-    searchText = ""
     searchInput.forceActiveFocus()
     Qt.callLater(function() {
       if (scroll && scroll.contentItem) scroll.contentItem.contentY = 0
       searchInput.selectAll()
     })
+  }
+
+  function searchClear() {
+    searchText = ""
+    root.ensureFocus()
   }
   function searchBlur() {
     searchInput.focus = false
@@ -153,6 +157,8 @@ Panel {
       onTextKey: function(text) {
         if (text === "/") root.searchFocus()
         else if (text === "r" || text === "R") root.refresh()
+        else if (text === "j") root.focusMove(1)
+        else if (text === "k") root.focusMove(-1)
       }
       onTabRequested: function(direction) { root.cycleSort() }
       onMoveRequested: function(dx, dy) { root.focusMove(dy !== 0 ? dy : dx) }
@@ -211,6 +217,7 @@ Panel {
             Keys.onPressed: function(event) {
               var key = event.key
               if (key === Qt.Key_Escape) { event.accepted = true; root.searchText = ""; root.searchBlur(); return }
+              if (key === Qt.Key_Backspace) { event.accepted = true; root.searchClear(); return }
               if (key === Qt.Key_Tab || key === Qt.Key_Backtab) { event.accepted = true; root.cycleSort(); root.searchBlur(); return }
               if (key === Qt.Key_Return || key === Qt.Key_Enter) { event.accepted = true; root.toggleFocused(); root.searchBlur(); return }
               if (key === Qt.Key_Down) { event.accepted = true; root.focusMove(1); selectAll(); return }
@@ -301,7 +308,7 @@ Panel {
           Text {
             visible: service.ipos.length > 0
             width: parent.width
-            text: "↑↓ / j k focus · ↵ toggles details · Tab cycles sort · / search · hover the graph for daily GMP. Prices in ₹."
+            text: "↑↓ / j k focus · ↵ toggles details · Tab cycles sort · / search · Esc clears & closes · R refresh · hover the graph for daily GMP. Prices in ₹."
             color: root.dim
             font.family: root.fontFamily
             font.pixelSize: Style.font.caption

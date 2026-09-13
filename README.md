@@ -37,11 +37,12 @@ Keyboard controls inside the panel:
 
 | Key | Action |
 | --- | --- |
-| `/` | Focus search |
-| `Esc` / `⌫` | Clear search and close |
+| `/` | Focus the search field, keeping the current text selected |
+| `⌫` / `Backspace` | Clear the search field |
+| `Esc` | Clear the search and exit search mode (press again to close the panel) |
 | `↑` `↓` / `j` `k` | Move focus between IPO cards |
 | `↵` / `Enter` | Expand or collapse the focused card |
-| `Tab` / `Shift+Tab` | Cycle sort mode |
+| `Tab` / `Shift+Tab` | Cycle sort mode (Default → GMP % → Close date) |
 | `R` / right- or middle-click | Refresh data immediately |
 
 Live IPOs are listed under a "Now bidding" header, upcoming ones under "Upcoming". Expanded cards show the subscription bars, the key-date grid, and a link to the IPO's prospectus (RHP/DRHP).
