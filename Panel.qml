@@ -224,7 +224,7 @@ Panel {
             text: root.searchText
             foreground: root.foreground
             accent: root.accent
-            placeholderText: "Search IPOs by name…  ( / to focus · Esc/⌫ clears )"
+            placeholderText: "Search IPOs by name…"
             onTextChanged: {
               root.searchText = text
               root.ensureFocus()
@@ -284,6 +284,21 @@ Panel {
             foreground: root.foreground
           }
 
+          Text {
+            visible: service.ipos.length > 0
+            width: parent.width
+            text: "↑↓ / j k focus · ↵ toggles details · Tab cycles sort · / search · Esc clears & closes · R refresh · hover the graph for daily GMP. Prices in ₹."
+            color: root.dim
+            font.family: root.fontFamily
+            font.pixelSize: Style.font.caption
+          }
+
+          PanelSeparator {
+            visible: service.ipos.length > 0
+            width: parent.width
+            foreground: root.foreground
+          }
+
           PanelSectionHeader {
             visible: liveIpos.length > 0
             text: "NOW BIDDING (" + liveIpos.length + ")"
@@ -333,15 +348,6 @@ Panel {
             visible: service.ipos.length > 0
             width: parent.width
             foreground: root.foreground
-          }
-
-          Text {
-            visible: service.ipos.length > 0
-            width: parent.width
-            text: "↑↓ / j k focus · ↵ toggles details · Tab cycles sort · / search · Esc clears & closes · R refresh · hover the graph for daily GMP. Prices in ₹."
-            color: root.dim
-            font.family: root.fontFamily
-            font.pixelSize: Style.font.caption
           }
         }
       }

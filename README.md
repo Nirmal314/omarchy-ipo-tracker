@@ -4,6 +4,31 @@ An Omarchy bar widget that tracks active Indian mainboard IPOs: grey market prem
 
 The data comes from [ipowatch.in](https://ipowatch.in), which is public and needs no API key. SME and NSE-evolved issues are filtered out, so the pill only counts mainboard IPOs.
 
+## Keyboard shortcuts
+
+| Key | Action |
+| --- | --- |
+| `/` | Focus the search field, keeping the current text selected |
+| `⌫` / `Backspace` | Clear the search field |
+| `Esc` | Clear the search and exit search mode (press again to close the panel) |
+| `↑` `↓` / `j` `k` | Move focus between IPO cards |
+| `↵` / `Enter` | Expand or collapse the focused card |
+| `Tab` / `Shift+Tab` | Cycle sort mode (Default → GMP % → Close date) |
+| `R` / right- or middle-click | Refresh data immediately |
+
+### Optional: open the panel from anywhere with `Super` + `I`
+
+The panel is not bound to a global key by default, but it exposes an IPC
+`toggle` method, so you can wire it up yourself in `~/.config/hypr/bindings.lua`:
+
+```lua
+o.bind("SUPER + I", "IPO tracker", "omarchy-shell shell toggle archer-nemo.ipo-tracker")
+```
+
+Before adding it, check `omarchy menu keybindings --print`; if `SUPER + I`
+is already taken you must `hl.unbind("SUPER + I")` first — say what it was
+bound to. Then validate with `hyprctl reload` and `hyprctl configerrors`.
+
 ## Features
 
 - **GMP at a glance**: the pill shows the next-ish IPO summary; each card shows band, lot, and minimum investment plus the current GMP and its day-over-day trend.
@@ -32,18 +57,6 @@ Nothing is stored outside the cache under `~/.local/state/omarchy/ipo-tracker/`.
 ## Usage
 
 Click the pill to open the panel. The bar pill is click-only; open/upcoming state and DnD / screen-record / weather widgets share the center section unchanged.
-
-Keyboard controls inside the panel:
-
-| Key | Action |
-| --- | --- |
-| `/` | Focus the search field, keeping the current text selected |
-| `⌫` / `Backspace` | Clear the search field |
-| `Esc` | Clear the search and exit search mode (press again to close the panel) |
-| `↑` `↓` / `j` `k` | Move focus between IPO cards |
-| `↵` / `Enter` | Expand or collapse the focused card |
-| `Tab` / `Shift+Tab` | Cycle sort mode (Default → GMP % → Close date) |
-| `R` / right- or middle-click | Refresh data immediately |
 
 Live IPOs are listed under a "Now bidding" header, upcoming ones under "Upcoming". Expanded cards show the subscription bars, the key-date grid, and a link to the IPO's prospectus (RHP/DRHP).
 
