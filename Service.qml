@@ -42,7 +42,6 @@ Item {
     stdout: StdioCollector {
       id: collectorOutput
       waitForEnd: true
-      onStreamFinished: root.output = text
     }
     stderr: StdioCollector { id: collectorStderr; waitForEnd: true }
     onExited: function(exitCode) {
@@ -59,5 +58,4 @@ Item {
       root.lastUpdated = new Date()
     }
   }
-  property string output: ""
 }

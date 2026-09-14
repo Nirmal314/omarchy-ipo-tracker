@@ -5,7 +5,7 @@
   "version": "1.0.0",
   "author": "omarchy-user",
   "license": "MIT",
-  "description": "Indian mainboard IPO tracker: grey market premium (GMP), subscriptions, price bands, key dates and RHP links. Click the pill for full details.",
+  "description": "Indian mainboard IPO tracker: grey market premium (GMP), subscriptions, price bands and key dates. Click the pill for full details.",
   "kinds": ["bar-widget"],
   "entryPoints": { "barWidget": "Panel.qml" },
   "barWidget": {

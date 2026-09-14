@@ -63,10 +63,6 @@ function trendGlyph(ipo) {
   return Number(ipo && ipo.gmp) > 0 ? "▲" : "◆"
 }
 
-function isPositive(ipo) {
-  return trendGlyph(ipo) === "▲"
-}
-
 // Static trend colors, independent of the active theme: up -> green,
 // down -> red, neutral (no premium / flat) -> "" so callers can fall back
 // to a theme dim tone.
@@ -80,12 +76,6 @@ function trendColor(ipo) {
   return ""
 }
 
-function shortName(name, max) {
-  var s = String(name || "")
-  max = max || 24
-  return s.length > max ? s.slice(0, max - 1) + "…" : s
-}
-
 function dateLabel(iso) {
   var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ""))
   if (!m) return ""
@@ -97,12 +87,6 @@ function closeRange(ipo) {
   var b = dateLabel(ipo && ipo.close)
   if (b) return a ? a + " – " + b : "by " + b
   return ""
-}
-
-function kindLabel(ipo) {
-  if (ipo && ipo.kind === "live") return "LIVE"
-  if (ipo && ipo.kind === "closed") return "CLOSED"
-  return "UPCOMING"
 }
 
 function isLive(ipo) {
@@ -140,15 +124,6 @@ function to12h(timeStr) {
   return h12 + ":" + m[2] + suffix
 }
 
-// Bar-pill summary: the next IPO to open (else first live), name + GMP.
-function nextIpo(ipos) {
-  if (!ipos || !ipos.length) return null
-  for (var i = 0; i < ipos.length; i++) {
-    if (!isLive(ipos[i])) return ipos[i]
-  }
-  return ipos[0]
-}
-
 function hasSub(ipo) {
   var s = ipo && ipo.sub
   return !!(s && isFinite(Number(s.total)) && Number(s.total) > 0)
@@ -169,37 +144,6 @@ function subMax(ipo) {
   var max = 0
   for (var i = 0; i < vals.length; i++) max = Math.max(max, vals[i])
   return max
-}
-
-// Day-by-day GMP history from the detail page (newest first) -> chronological.
-function sparkOrder(history) {
-  var list = (history && history.length > 0) ? history : []
-  var order = []
-  for (var i = list.length - 1; i >= 0; i--) {
-    var g = Number(list[i] && list[i].gmp)
-    if (isFinite(g) && g > 0) order.push(g)
-  }
-  return order
-}
-
-var SPARK_CHARS = "▁▂▃▄▅▆▇█"
-
-function sparkline(history) {
-  var series = sparkOrder(history)
-  if (series.length < 2) return ""
-  var min = series[0], max = series[0]
-  for (var i = 1; i < series.length; i++) {
-    if (series[i] < min) min = series[i]
-    if (series[i] > max) max = series[i]
-  }
-  var span = max - min
-  var out = ""
-  for (var j = 0; j < series.length; j++) {
-    var v = span > 0 ? (series[j] - min) / span : 0.5
-    var idx = Math.min(7, Math.max(0, Math.round(v * 7)))
-    out += SPARK_CHARS.charAt(idx)
-  }
-  return out
 }
 
 // Chronological, normalized day points for the per-day GMP graph, each with a
@@ -317,24 +261,18 @@ var exportsObject = {
   gmp: gmp,
   gmpPct: gmpPct,
   trendGlyph: trendGlyph,
-  isPositive: isPositive,
   trendColor: trendColor,
-  shortName: shortName,
   dateLabel: dateLabel,
   closeRange: closeRange,
-  kindLabel: kindLabel,
   isLive: isLive,
   liveOnly: liveOnly,
   closedOnly: closedOnly,
   upcomingOnly: upcomingOnly,
-  nextIpo: nextIpo,
   to12h: to12h,
   hasSub: hasSub,
   subTotal: subTotal,
   subValues: subValues,
   subMax: subMax,
-  sparkOrder: sparkOrder,
-  sparkline: sparkline,
   sparkDays: sparkDays,
   sortPct: sortPct,
   closeTs: closeTs,

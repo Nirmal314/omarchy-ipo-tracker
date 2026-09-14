@@ -4,7 +4,7 @@
 Fetches public Indian mainboard IPO data from ipowatch.in (free, no API key):
   - GMP grey-market page      -> active/upcoming list, GMP, trend, band, dates
   - subscription status page  -> QIB/NII/Retail/Total subscription + IPO type
-  - per-IPO detail pages      -> exact band, lot size, key dates, RHP/DRHP PDFs
+  - per-IPO detail pages      -> exact band, lot size, and key dates
 
 Pure data gathering + parsing. No AI, no DOM, no paid endpoints.
 Output: one JSON object on stdout (consumed by Service.qml).
@@ -269,19 +269,6 @@ def parse_detail(raw, slug, fallback):
     if detail["lot"] and not detail["min_invest"] and detail.get("band_high"):
         detail["min_invest"] = detail["lot"] * detail["band_high"]
 
-    pdfs = []
-    for m in re.finditer(r'<a[^>]+href="([^"]*)"', raw or "", re.I):
-        href = m.group(1)
-        if re.search(r"(rhp|drhp).*\.pdf", href, re.I):
-            pdfs.append(href)
-    detail["rhp_url"] = ""
-    detail["drhp_url"] = ""
-    for href in pdfs:
-        if re.search(r"drhp", href, re.I) and "-rhp" not in href and not detail["drhp_url"]:
-            detail["drhp_url"] = href
-        elif re.search(r"rhp", href, re.I) and not re.search(r"drhp", href, re.I) and not detail["rhp_url"]:
-            detail["rhp_url"] = href
-
     hist = []
     for table in tables_of(raw or ""):
         if not table or len(table) < 2:
@@ -483,8 +470,6 @@ def build():
                 "listing": detail.get("listing_date", "") if detail else "",
             },
             "gmp_history": detail.get("gmp_history", []) if detail else [],
-            "rhp_url": detail.get("rhp_url", "") if detail else "",
-            "drhp_url": detail.get("drhp_url", "") if detail else "",
             "source": "ipowatch.in",
         }
         ipos.append(record)

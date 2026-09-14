@@ -2,7 +2,7 @@
 
 An Omarchy bar widget that tracks active Indian mainboard IPOs: grey market premium (GMP), daily GMP history, subscription numbers, price bands, lot sizes, and the key dates between open and listing. It shows a single pill in the bar with the Lucide chart-line icon, and clicking it opens a panel with every IPO currently open for bidding or coming up.
 
-The data comes from [ipowatch.in](https://ipowatch.in), which is public and needs no API key. SME and NSE-evolved issues are filtered out, so the pill only counts mainboard IPOs.
+The data comes from [ipowatch.in](https://ipowatch.in), which is public and needs no API key. SME issues are filtered out, so the widget only counts mainboard IPOs.
 
 ## Keyboard shortcuts
 
@@ -18,7 +18,7 @@ The data comes from [ipowatch.in](https://ipowatch.in), which is public and need
 
 ## Trigger
 
-Click the pill in the bar to open the panel. Live IPOs are listed under a "Now bidding" header, upcoming ones under "Upcoming"; expanded cards show the subscription bars, the key-date grid, and a link to the IPO's prospectus (RHP/DRHP).
+Click the pill in the bar to open the panel. Live IPOs are listed under a "Now bidding" header, closed issues under "Closed · Listing pending", and upcoming ones under "Upcoming"; expanded cards show the subscription bars and key-date grid.
 
 The panel is not bound to a global key by default, but it exposes an IPC `toggle` method, so you can optionally bind one yourself in `~/.config/hypr/bindings.lua`:
 
@@ -30,10 +30,10 @@ Before adding it, check `omarchy menu keybindings --print`; if `SUPER + I` is al
 
 ## Features
 
-- **GMP at a glance**: the pill shows the next-ish IPO summary; each card shows band, lot, and minimum investment plus the current GMP and its day-over-day trend.
+- **GMP at a glance**: each card shows band, lot, and minimum investment plus the current GMP and its day-over-day trend.
 - **Daily GMP sparkline**: hover the bars in a card to read each day's GMP and the change since the previous day.
 - **Subscriptions**: QIB / NII / Retail / Total subscription bars for live IPOs, colored once a category crosses 1x.
-- **Key dates**: open, close, allotment, refunds, demat credit, and listing date, plus RHP links when a card is expanded.
+- **Key dates**: open, close, allotment, refunds, demat credit, and listing date.
 - **Search and sort**: `/` focuses search, `Tab` cycles sort modes (default / GMP % / close date), `↵` expands the focused card.
 - **Refresh**: `R` or middle-click refreshes; the shell also refreshes automatically, every 10 minutes by default.
 
@@ -66,7 +66,7 @@ omarchy plugin remove archer-nemo.ipo-tracker
 The widget runs its bundled `collector.sh`, which delegates to `collector.py`. On each refresh the collector:
 
 1. Pulls the GMP page and the subscription status page from ipowatch.in.
-2. Fetches the individual IPO and GMP-history pages (threaded, 4 at a time) to get exact bands, lot sizes, key dates, RHP/DRHP links, and the daily GMP series.
+2. Fetches the individual IPO and GMP-history pages (threaded, 4 at a time) to get exact bands, lot sizes, key dates, and the daily GMP series.
 3. Drops SME issues, merging everything into a single JSON object.
 4. Prints that JSON to stdout, where `Service.qml` parses it and feeds `Panel.qml`.
 
@@ -89,7 +89,7 @@ Values are clamped to 60–86400 seconds. The layout entry itself only needs the
 
 ### The pill is missing from the bar
 
-Confirm the plugin ID lines up: the manifest declares `id` `"archer-nemo.ipo-tracker"`, and `~/.config/omarchy/shell.json` must reference that same id in `bar.layout`. A mismatch (for example an entry using the folder name `omarchy-ipo-tracker`) means the shell cannot resolve the widget.
+Confirm the plugin ID lines up: the manifest declares `id` `"archer-nemo.ipo-tracker"`, and `~/.config/omarchy/shell.json` must reference that same id in `bar.layout`. A mismatch means the shell cannot resolve the widget.
 
 After fixing the id, rescan so the shell notices the plugin folder:
 
@@ -102,7 +102,7 @@ omarchy-shell shell rescanPlugins
 Check the widget's error line inside the open panel. Common causes: no network (the collector falls back to the cached snapshot), or `python3`/`curl` missing. The collector can be run by hand to see its raw output and exit status:
 
 ```sh
-~/.config/omarchy/plugins/omarchy-ipo-tracker/bin/collector.sh
+~/.config/omarchy/plugins/archer-nemo.ipo-tracker/bin/collector.sh
 ```
 
 Saved edits under `~/.config/omarchy/plugins/` reload automatically. If they do not, force a rescan with `omarchy-shell shell rescanPlugins` or restart the shell with `omarchy restart shell`.

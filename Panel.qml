@@ -778,45 +778,4 @@ Panel {
     }
   }
 
-  component LinkChip: Rectangle {
-    id: chip
-    property string text: ""
-    property string url: ""
-    property bool enabled: true
-    property color foreground: Color.foreground
-    property color accent: Color.accent
-    property color dim: Color.foreground
-    property string fontFamily: Style.font.family
-
-    width: chipText.implicitWidth + Style.space(12)
-    height: chipText.implicitHeight + Style.space(6)
-    radius: Math.min(8, height / 2)
-    color: chipMouse.containsMouse && enabled
-      ? Qt.rgba(accent.r, accent.g, accent.b, 0.22)
-      : Qt.rgba(dim.r, dim.g, dim.b, 0.12)
-    border.width: 1
-    border.color: chipMouse.containsMouse && enabled
-      ? Qt.rgba(accent.r, accent.g, accent.b, 0.55)
-      : Qt.rgba(dim.r, dim.g, dim.b, 0.3)
-
-    Text {
-      id: chipText
-      anchors.centerIn: parent
-      textFormat: Text.PlainText
-      text: chip.text + " ↗"
-      color: chip.enabled ? foreground : Qt.darker(dim, 1.2)
-      font.family: fontFamily
-      font.pixelSize: Style.font.caption
-      font.bold: true
-    }
-
-    MouseArea {
-      id: chipMouse
-      anchors.fill: parent
-      enabled: chip.enabled
-      hoverEnabled: true
-      cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-      onClicked: if (enabled) Util.execArgv(["xdg-open", chip.url])
-    }
-  }
 }
