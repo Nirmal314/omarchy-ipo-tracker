@@ -10,7 +10,7 @@ The data comes from [ipowatch.in](https://ipowatch.in), which is public and need
 | --- | --- |
 | `/` | Focus the search field, keeping the current text selected |
 | `⌫` / `Backspace` | Clear the search field |
-| `Esc` | Clear the search and exit search mode (press again to close the panel) |
+| `Esc` | Close the panel without clearing the search text |
 | `↑` `↓` / `j` `k` | Move focus between IPO cards |
 | `↵` / `Enter` | Expand or collapse the focused card |
 | `Tab` / `Shift+Tab` | Cycle sort mode (Default → GMP % → Close date) |

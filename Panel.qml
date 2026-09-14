@@ -231,7 +231,7 @@ Panel {
             }
             Keys.onPressed: function(event) {
               var key = event.key
-              if (key === Qt.Key_Escape) { event.accepted = true; root.searchText = ""; root.searchBlur(); return }
+              if (key === Qt.Key_Escape) { event.accepted = true; root.close(); return }
               if (key === Qt.Key_Backspace) { event.accepted = true; root.searchClear(); return }
               if (key === Qt.Key_Tab || key === Qt.Key_Backtab) { event.accepted = true; root.cycleSort(); root.searchBlur(); return }
               if (key === Qt.Key_Return || key === Qt.Key_Enter) { event.accepted = true; root.toggleFocused(); root.searchBlur(); return }
@@ -287,7 +287,7 @@ Panel {
           Text {
             visible: service.ipos.length > 0
             width: parent.width
-            text: "↑↓ / j k focus · ↵ toggles details · Tab cycles sort · / search · Esc clears & closes · R refresh · hover the graph for daily GMP. Prices in ₹."
+            text: "↑↓ / j k focus · ↵ toggles details · Tab cycles sort · / search · Esc closes · R refresh\nhover the graph for daily GMP. Prices in ₹."
             color: root.dim
             font.family: root.fontFamily
             font.pixelSize: Style.font.caption
