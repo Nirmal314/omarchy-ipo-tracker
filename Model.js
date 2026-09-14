@@ -100,7 +100,9 @@ function closeRange(ipo) {
 }
 
 function kindLabel(ipo) {
-  return (ipo && ipo.kind === "live") ? "LIVE" : "UPCOMING"
+  if (ipo && ipo.kind === "live") return "LIVE"
+  if (ipo && ipo.kind === "closed") return "CLOSED"
+  return "UPCOMING"
 }
 
 function isLive(ipo) {
@@ -115,7 +117,17 @@ function liveOnly(ipos) {
 
 function upcomingOnly(ipos) {
   var out = []
-  for (var i = 0; i < ipos.length; i++) if (!isLive(ipos[i])) out.push(ipos[i])
+  for (var i = 0; i < ipos.length; i++) {
+    if (ipos[i] && ipos[i].kind === "upcoming") out.push(ipos[i])
+  }
+  return out
+}
+
+function closedOnly(ipos) {
+  var out = []
+  for (var i = 0; i < ipos.length; i++) {
+    if (ipos[i] && ipos[i].kind === "closed") out.push(ipos[i])
+  }
   return out
 }
 
@@ -304,6 +316,7 @@ var exportsObject = {
   kindLabel: kindLabel,
   isLive: isLive,
   liveOnly: liveOnly,
+  closedOnly: closedOnly,
   upcomingOnly: upcomingOnly,
   nextIpo: nextIpo,
   hasSub: hasSub,

@@ -25,11 +25,12 @@ Panel {
 
   readonly property var visibleIpos: Model.processIpos(service.ipos, searchText, sortMode)
   readonly property var liveIpos: Model.liveOnly(visibleIpos)
+  readonly property var closedIpos: Model.closedOnly(visibleIpos)
   readonly property var upcomingIpos: Model.upcomingOnly(visibleIpos)
-  // Navigation must follow the order the two Repeaters actually render
-  // (all live cards, then all upcoming cards) - NOT the raw sorted list,
-  // which interleaves live/upcoming under pct/close sort.
-  readonly property var renderedIpos: liveIpos.concat(upcomingIpos)
+  // Navigation must follow the order the Repeaters actually render
+  // (all live cards, then all closed cards, then all upcoming cards)
+  // NOT the raw sorted list, which interleaves different kinds under pct/close sort.
+  readonly property var renderedIpos: liveIpos.concat(closedIpos).concat(upcomingIpos)
   readonly property string sortLabel: Model.sortModeLabel(sortMode)
 
   onVisibleIposChanged: ensureFocus()
@@ -212,7 +213,7 @@ Panel {
             meta: root.searchText
               ? visibleIpos.length + " of " + service.ipos.length + " IPOs · " + root.sortLabel + " sort"
               : service.ipos.length + " mainboard IPOs · "
-                + liveIpos.length + " live · " + upcomingIpos.length + " upcoming"
+                + liveIpos.length + " live · " + closedIpos.length + " closed · " + upcomingIpos.length + " upcoming"
             foreground: root.foreground
             fontFamily: root.fontFamily
           }
@@ -292,6 +293,21 @@ Panel {
 
           Repeater {
             model: liveIpos
+
+            delegate: IpoCard {
+              width: body.width
+            }
+          }
+
+          PanelSectionHeader {
+            visible: closedIpos.length > 0
+            text: "CLOSED · LISTING PENDING (" + closedIpos.length + ")"
+            foreground: root.foreground
+            fontFamily: root.fontFamily
+          }
+
+          Repeater {
+            model: closedIpos
 
             delegate: IpoCard {
               width: body.width
@@ -685,11 +701,13 @@ Panel {
     property string fontFamily: Style.font.family
 
     readonly property bool live: kind === "live"
+    readonly property bool closed: kind === "closed"
     width: pillText.implicitWidth + Style.space(10)
     height: pillText.implicitHeight + Style.space(4)
     radius: Math.min(8, height / 2)
     color: live ? Qt.rgba(accent.r, accent.g, accent.b, 0.22)
-                : Qt.rgba(dim.r, dim.g, dim.b, 0.18)
+                : closed ? Qt.rgba(dim.r, dim.g, dim.b, 0.14)
+                         : Qt.rgba(dim.r, dim.g, dim.b, 0.18)
     border.width: 1
     border.color: live ? Qt.rgba(accent.r, accent.g, accent.b, 0.55)
                        : Qt.rgba(dim.r, dim.g, dim.b, 0.4)
@@ -698,7 +716,7 @@ Panel {
       id: pillText
       anchors.centerIn: parent
       textFormat: Text.PlainText
-      text: live ? "LIVE" : "UPCOMING"
+      text: live ? "LIVE" : closed ? "CLOSED" : "UPCOMING"
       color: live ? accent : Qt.darker(dim, 1.15)
       font.family: fontFamily
       font.pixelSize: Style.font.caption

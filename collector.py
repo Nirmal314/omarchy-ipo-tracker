@@ -364,9 +364,15 @@ def build():
     base_year = date.today().year
     kept = []
     for row in gmp:
-        if row["status"] not in ("open", "upcoming"):
+        status = row["status"]
+        if status == "open":
+            row["kind"] = "live"
+        elif status == "upcoming":
+            row["kind"] = "upcoming"
+        elif status == "closed":
+            row["kind"] = "closed"
+        else:
             continue
-        row["kind"] = "live" if row["status"] == "open" else "upcoming"
         kept.append(row)
 
     # Fetch/refresh detail pages with a TTL cache.
@@ -484,7 +490,8 @@ def build():
         ipos.append(record)
 
     def sort_key(ipo):
-        return (0 if ipo["kind"] == "live" else 1,
+        kind_order = {"live": 0, "closed": 1, "upcoming": 2}
+        return (kind_order.get(ipo["kind"], 3),
                 ipo["close"] or "9999", ipo["open"] or "9999", ipo["name"])
 
     ipos.sort(key=sort_key)
