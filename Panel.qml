@@ -26,6 +26,10 @@ Panel {
   readonly property var visibleIpos: Model.processIpos(service.ipos, searchText, sortMode)
   readonly property var liveIpos: Model.liveOnly(visibleIpos)
   readonly property var upcomingIpos: Model.upcomingOnly(visibleIpos)
+  // Navigation must follow the order the two Repeaters actually render
+  // (all live cards, then all upcoming cards) - NOT the raw sorted list,
+  // which interleaves live/upcoming under pct/close sort.
+  readonly property var renderedIpos: liveIpos.concat(upcomingIpos)
   readonly property string sortLabel: Model.sortModeLabel(sortMode)
 
   onVisibleIposChanged: ensureFocus()
@@ -38,38 +42,48 @@ Panel {
   implicitHeight: button.implicitHeight
 
   function visibleIndex(slug) {
-    for (var i = 0; i < visibleIpos.length; i++)
-      if (visibleIpos[i].slug === slug) return i
+    for (var i = 0; i < renderedIpos.length; i++)
+      if (renderedIpos[i].slug === slug) return i
     return -1
   }
-  function focusFirst() { if (visibleIpos.length) focusedSlug = visibleIpos[0].slug }
-  function focusLast() { if (visibleIpos.length) focusedSlug = visibleIpos[visibleIpos.length - 1].slug }
+  function focusFirst() { if (renderedIpos.length) focusedSlug = renderedIpos[0].slug }
+  function focusLast() { if (renderedIpos.length) focusedSlug = renderedIpos[renderedIpos.length - 1].slug }
   function focusMove(dir) {
-    if (!visibleIpos.length) return
+    if (!renderedIpos.length) return
     var idx = visibleIndex(focusedSlug)
-    if (idx < 0) idx = dir > 0 ? -1 : visibleIpos.length
-    idx = (idx + dir + visibleIpos.length) % visibleIpos.length
-    focusedSlug = visibleIpos[idx].slug
+    if (idx < 0) idx = dir > 0 ? -1 : renderedIpos.length
+    idx = (idx + dir + renderedIpos.length) % renderedIpos.length
+    focusedSlug = renderedIpos[idx].slug
   }
   function ensureCardVisible(card) {
     if (!card || !scroll || !scroll.contentItem) return
     var view = scroll.contentItem
     var insets = Style.space(8)
-    if (root.visibleIpos.length && card.ipo && card.ipo.slug === root.visibleIpos[0].slug) {
+    if (root.renderedIpos.length && card.ipo && card.ipo.slug === root.renderedIpos[0].slug) {
       view.contentY = 0
       return
     }
     var y = card.mapToItem(body, 0, 0).y
-    if (y < view.contentY + insets) {
+    var cardH = card.height
+    var usableH = view.height - insets * 2
+    if (cardH >= usableH) {
+      // Card (typically an expanded one) is taller than the viewport - pin to its
+      // top so the header/focus ring stays visible instead of chasing the bottom edge.
       view.contentY = y - insets
-    } else if (y + card.height > view.contentY + view.height - insets) {
-      view.contentY = y + card.height - (view.height - insets)
+    } else if (y < view.contentY + insets) {
+      view.contentY = y - insets
+    } else if (y + cardH > view.contentY + view.height - insets) {
+      view.contentY = y + cardH - (view.height - insets)
     }
     view.contentY = Math.max(0, Math.min(view.contentY, view.contentHeight - view.height))
   }
-  function cycleSort() {
-    sortMode = sortMode === "default" ? "pct" : (sortMode === "pct" ? "close" : "default")
-    Qt.callLater(function() { root.focusFirst() })
+  function cycleSort(direction) {
+    var order = ["default", "pct", "close"]
+    var idx = order.indexOf(sortMode)
+    if (idx < 0) idx = 0
+    idx = (idx + (direction || 1) + order.length) % order.length
+    sortMode = order[idx]
+    focusFirst()
   }
   function toggleFocused() {
     if (focusedSlug) expandedIpoSlug = expandedIpoSlug === focusedSlug ? "" : focusedSlug
@@ -160,7 +174,7 @@ Panel {
         else if (text === "j") root.focusMove(1)
         else if (text === "k") root.focusMove(-1)
       }
-      onTabRequested: function(direction) { root.cycleSort() }
+      onTabRequested: function(direction) { root.cycleSort(direction) }
       onMoveRequested: function(dx, dy) { root.focusMove(dy !== 0 ? dy : dx) }
       onActivateRequested: root.toggleFocused()
 
@@ -326,6 +340,7 @@ Panel {
     readonly property bool hovered: cardHover.hovered
     readonly property bool focused: root.focusedSlug === ipo.slug
     onFocusedChanged: if (focused) Qt.callLater(root.ensureCardVisible, card)
+    onExpandedChanged: if (expanded) Qt.callLater(root.ensureCardVisible, card)
     spacing: Style.space(4)
 
     Rectangle {
