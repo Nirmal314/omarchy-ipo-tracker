@@ -16,18 +16,17 @@ The data comes from [ipowatch.in](https://ipowatch.in), which is public and need
 | `Tab` / `Shift+Tab` | Cycle sort mode (Default → GMP % → Close date) |
 | `R` / right- or middle-click | Refresh data immediately |
 
-### Optional: open the panel from anywhere with `Super` + `I`
+## Trigger
 
-The panel is not bound to a global key by default, but it exposes an IPC
-`toggle` method, so you can wire it up yourself in `~/.config/hypr/bindings.lua`:
+Click the pill in the bar to open the panel. Live IPOs are listed under a "Now bidding" header, upcoming ones under "Upcoming"; expanded cards show the subscription bars, the key-date grid, and a link to the IPO's prospectus (RHP/DRHP).
+
+The panel is not bound to a global key by default, but it exposes an IPC `toggle` method, so you can optionally bind one yourself in `~/.config/hypr/bindings.lua`:
 
 ```lua
 o.bind("SUPER + I", "IPO tracker", "omarchy-shell shell toggle archer-nemo.ipo-tracker")
 ```
 
-Before adding it, check `omarchy menu keybindings --print`; if `SUPER + I`
-is already taken you must `hl.unbind("SUPER + I")` first — say what it was
-bound to. Then validate with `hyprctl reload` and `hyprctl configerrors`.
+Before adding it, check `omarchy menu keybindings --print`; if `SUPER + I` is already taken you must `hl.unbind("SUPER + I")` first — say what it was bound to. Then validate with `hyprctl reload` and `hyprctl configerrors`.
 
 ## Features
 
@@ -43,6 +42,25 @@ bound to. Then validate with `hyprctl reload` and `hyprctl configerrors`.
 - Omarchy with the Quickshell shell
 - `bash`, `python3`, and `curl` (all present on a stock Omarchy install)
 
+## Installation
+
+```sh
+omarchy plugin add https://github.com/Nirmal314/omarchy-ipo-tracker --enable
+omarchy bar move archer-nemo.ipo-tracker --section center
+```
+
+## Update
+
+```sh
+omarchy plugin update archer-nemo.ipo-tracker
+```
+
+## Remove
+
+```sh
+omarchy plugin remove archer-nemo.ipo-tracker
+```
+
 ## How it works
 
 The widget runs its bundled `collector.sh`, which delegates to `collector.py`. On each refresh the collector:
@@ -53,12 +71,6 @@ The widget runs its bundled `collector.sh`, which delegates to `collector.py`. O
 4. Prints that JSON to stdout, where `Service.qml` parses it and feeds `Panel.qml`.
 
 Nothing is stored outside the cache under `~/.local/state/omarchy/ipo-tracker/`. The detail cache is valid for two hours, and the last snapshot is reused if the network is unreachable, so the widget keeps working offline with a "showing last snapshot" note.
-
-## Usage
-
-Click the pill to open the panel. The bar pill is click-only; open/upcoming state and DnD / screen-record / weather widgets share the center section unchanged.
-
-Live IPOs are listed under a "Now bidding" header, upcoming ones under "Upcoming". Expanded cards show the subscription bars, the key-date grid, and a link to the IPO's prospectus (RHP/DRHP).
 
 ## Configuration
 
@@ -72,15 +84,6 @@ The refresh interval is a plugin setting, defaulting to 600 seconds. It lives un
 ```
 
 Values are clamped to 60–86400 seconds. The layout entry itself only needs the `id`; the rest is optional.
-
-## Installation
-
-```sh
-omarchy plugin add https://github.com/Nirmal314/omarchy-ipo-tracker --enable
-omarchy bar move archer-nemo.ipo-tracker --section center
-```
-
-Remove the widget with `omarchy plugin remove archer-nemo.ipo-tracker`.
 
 ## Troubleshooting
 
