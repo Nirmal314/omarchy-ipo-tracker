@@ -501,7 +501,7 @@ Panel {
               }
               Text {
                 textFormat: Text.PlainText
-                text: ipo.sub && ipo.sub.updated ? "as of " + ipo.sub.updated : ""
+                text: ipo.sub && ipo.sub.updated ? "as of " + Model.to12h(ipo.sub.updated) : ""
                 color: root.dim
                 font.family: root.fontFamily
                 font.pixelSize: Style.font.caption

@@ -131,6 +131,15 @@ function closedOnly(ipos) {
   return out
 }
 
+function to12h(timeStr) {
+  var m = /^(\d{1,2}):(\d{2})$/.exec(String(timeStr || ""))
+  if (!m) return String(timeStr || "")
+  var h = parseInt(m[1], 10)
+  var suffix = h >= 12 ? " PM" : " AM"
+  var h12 = h === 0 ? 12 : h > 12 ? h - 12 : h
+  return h12 + ":" + m[2] + suffix
+}
+
 // Bar-pill summary: the next IPO to open (else first live), name + GMP.
 function nextIpo(ipos) {
   if (!ipos || !ipos.length) return null
@@ -319,6 +328,7 @@ var exportsObject = {
   closedOnly: closedOnly,
   upcomingOnly: upcomingOnly,
   nextIpo: nextIpo,
+  to12h: to12h,
   hasSub: hasSub,
   subTotal: subTotal,
   subValues: subValues,
