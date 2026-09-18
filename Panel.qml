@@ -33,7 +33,10 @@ Panel {
   readonly property var renderedIpos: liveIpos.concat(closedIpos).concat(upcomingIpos)
   readonly property string sortLabel: Model.sortModeLabel(sortMode)
 
-  onVisibleIposChanged: ensureFocus()
+  onVisibleIposChanged: {
+    ensureFocus()
+    Qt.callLater(ensureFocusedCardVisible)
+  }
 
   function ensureFocus() {
     if (visibleIndex(focusedSlug) < 0) focusFirst()
@@ -43,21 +46,60 @@ Panel {
   implicitHeight: button.implicitHeight
 
   function visibleIndex(slug) {
-    for (var i = 0; i < renderedIpos.length; i++)
-      if (renderedIpos[i].slug === slug) return i
+    if (!slug) return -1
+    for (var i = 0; i < renderedIpos.length; i++) {
+      var item = renderedIpos[i]
+      if (item && item.slug === slug) return i
+    }
     return -1
   }
-  function focusFirst() { if (renderedIpos.length) focusedSlug = renderedIpos[0].slug }
-  function focusLast() { if (renderedIpos.length) focusedSlug = renderedIpos[renderedIpos.length - 1].slug }
+  function focusFirst() {
+    for (var i = 0; i < renderedIpos.length; i++) {
+      if (renderedIpos[i] && renderedIpos[i].slug) {
+        focusedSlug = renderedIpos[i].slug
+        return
+      }
+    }
+  }
+  function focusLast() {
+    for (var i = renderedIpos.length - 1; i >= 0; i--) {
+      if (renderedIpos[i] && renderedIpos[i].slug) {
+        focusedSlug = renderedIpos[i].slug
+        return
+      }
+    }
+  }
   function focusMove(dir) {
-    if (!renderedIpos.length) return
+    var n = renderedIpos.length
+    if (!n) return
+    var step = dir > 0 ? 1 : (dir < 0 ? -1 : 0)
+    if (!step) return
     var idx = visibleIndex(focusedSlug)
-    if (idx < 0) idx = dir > 0 ? -1 : renderedIpos.length
-    idx = (idx + dir + renderedIpos.length) % renderedIpos.length
-    focusedSlug = renderedIpos[idx].slug
+    if (idx < 0) idx = step > 0 ? -1 : n
+    idx = (idx + step + n) % n
+    var target = renderedIpos[idx]
+    if (target && target.slug) focusedSlug = target.slug
+  }
+  function findCard(slug) {
+    if (!slug) return null
+    var repeaters = [liveCards, closedCards, upcomingCards]
+    for (var r = 0; r < repeaters.length; r++) {
+      var rep = repeaters[r]
+      if (!rep) continue
+      for (var i = 0; i < rep.count; i++) {
+        var item = rep.itemAt(i)
+        if (item && item.ipo && item.ipo.slug === slug) return item
+      }
+    }
+    return null
+  }
+  function ensureFocusedCardVisible() {
+    if (!focusedSlug || !renderedIpos.length) return
+    var card = findCard(focusedSlug)
+    if (card) ensureCardVisible(card)
   }
   function ensureCardVisible(card) {
-    if (!card || !scroll || !scroll.contentItem) return
+    if (!card || !scroll || !scroll.contentItem || !body) return
     var view = scroll.contentItem
     var insets = Style.space(8)
     if (root.renderedIpos.length && card.ipo && card.ipo.slug === root.renderedIpos[0].slug) {
@@ -76,18 +118,30 @@ Panel {
     } else if (y + cardH > view.contentY + view.height - insets) {
       view.contentY = y + cardH - (view.height - insets)
     }
-    view.contentY = Math.max(0, Math.min(view.contentY, view.contentHeight - view.height))
+    var maxY = view.contentHeight - view.height
+    if (!isFinite(maxY)) maxY = 0
+    view.contentY = Math.max(0, Math.min(view.contentY, Math.max(0, maxY)))
   }
   function cycleSort(direction) {
     var order = ["default", "pct", "close"]
     var idx = order.indexOf(sortMode)
     if (idx < 0) idx = 0
-    idx = (idx + (direction || 1) + order.length) % order.length
+    idx = (idx + (direction < 0 ? -1 : 1) + order.length) % order.length
     sortMode = order[idx]
     focusFirst()
   }
   function toggleFocused() {
-    if (focusedSlug) expandedIpoSlug = expandedIpoSlug === focusedSlug ? "" : focusedSlug
+    if (!focusedSlug) return
+    var wasExpanded = expandedIpoSlug === focusedSlug
+    expandedIpoSlug = wasExpanded ? "" : focusedSlug
+    Qt.callLater(root.ensureFocusedCardVisible)
+  }
+  function selectCard(slug) {
+    if (!slug) return
+    focusedSlug = slug
+    expandedIpoSlug = expandedIpoSlug === slug ? "" : slug
+    if (catcher) catcher.forceActiveFocus()
+    Qt.callLater(root.ensureFocusedCardVisible)
   }
   function searchFocus() {
     searchInput.forceActiveFocus()
@@ -120,6 +174,14 @@ Panel {
   Service {
     id: service
     settings: root.settings
+  }
+
+  Connections {
+    target: service
+    function onIposChanged() {
+      if (root.expandedIpoSlug && !Model.hasSlug(service.ipos, root.expandedIpoSlug))
+        root.expandedIpoSlug = ""
+    }
   }
 
   Timer {
@@ -233,7 +295,7 @@ Panel {
               var key = event.key
               if (key === Qt.Key_Escape) { event.accepted = true; root.close(); return }
               if (key === Qt.Key_Backspace) { event.accepted = true; root.searchClear(); return }
-              if (key === Qt.Key_Tab || key === Qt.Key_Backtab) { event.accepted = true; root.cycleSort(); root.searchBlur(); return }
+              if (key === Qt.Key_Tab || key === Qt.Key_Backtab) { event.accepted = true; root.cycleSort(key === Qt.Key_Backtab ? -1 : 1); root.searchBlur(); return }
               if (key === Qt.Key_Return || key === Qt.Key_Enter) { event.accepted = true; root.toggleFocused(); root.searchBlur(); return }
               if (key === Qt.Key_Down) { event.accepted = true; root.focusMove(1); selectAll(); return }
               if (key === Qt.Key_Up) { event.accepted = true; root.focusMove(-1); selectAll(); return }
@@ -307,6 +369,7 @@ Panel {
           }
 
           Repeater {
+            id: liveCards
             model: liveIpos
 
             delegate: IpoCard {
@@ -322,6 +385,7 @@ Panel {
           }
 
           Repeater {
+            id: closedCards
             model: closedIpos
 
             delegate: IpoCard {
@@ -337,6 +401,7 @@ Panel {
           }
 
           Repeater {
+            id: upcomingCards
             model: upcomingIpos
 
             delegate: IpoCard {
@@ -591,7 +656,7 @@ Panel {
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         onEntered: root.focusedSlug = ipo.slug
-        onClicked: root.expandedIpoSlug = card.expanded ? "" : ipo.slug
+        onClicked: root.selectCard(ipo.slug)
       }
     }
   }

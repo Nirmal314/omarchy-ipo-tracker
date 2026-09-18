@@ -217,6 +217,14 @@ function sortIpos(list, mode) {
   return arr
 }
 
+function hasSlug(ipos, slug) {
+  if (!ipos || !ipos.length || !slug) return false
+  for (var i = 0; i < ipos.length; i++) {
+    if (ipos[i] && ipos[i].slug === slug) return true
+  }
+  return false
+}
+
 function processIpos(ipos, query, mode) {
   return sortIpos(searchIpos(ipos, query), mode)
 }
@@ -277,6 +285,7 @@ var exportsObject = {
   sortPct: sortPct,
   closeTs: closeTs,
   searchIpos: searchIpos,
+  hasSlug: hasSlug,
   sortIpos: sortIpos,
   processIpos: processIpos,
   sortModeLabel: sortModeLabel,
