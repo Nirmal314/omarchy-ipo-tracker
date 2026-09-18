@@ -90,6 +90,32 @@ def normalize_name(name):
     return re.sub(r"[^a-z0-9]+", "", (name or "").lower())
 
 
+# Legal suffixes stripped (longest first) for tolerant IPO-name matching
+# between the GMP and subscription pages, where one page may spell the
+# issuer differently ("Hero Motors Ltd" vs "Hero Motors").
+_NAME_SUFFIXES = ("publiclimited", "privatelimited", "limited", "ltd", "plc")
+
+
+def base_name(norm):
+    """Strip one trailing company suffix, keeping a stem of at least 3 chars."""
+    if len(norm) < 4:
+        return norm
+    for suffix in _NAME_SUFFIXES:
+        if norm.endswith(suffix) and len(norm) - len(suffix) >= 3:
+            return norm[:len(norm) - len(suffix)]
+    return norm
+
+
+def find_col(header, *tokens):
+    """First header index whose lowercased text starts with any token, or None."""
+    ih = {str(h).strip().lower(): i for i, h in enumerate(header)}
+    for token in tokens:
+        for key, idx in ih.items():
+            if key.startswith(token):
+                return idx
+    return None
+
+
 def iso_of(full):
     """Parse 'September 17, 2026' -> '2026-09-17'. Returns '' on failure."""
     m = re.match(r"^([A-Za-z]+)\s+(\d{1,2}),\s*(\d{4})$", (full or "").strip())
@@ -163,7 +189,8 @@ def parse_gmp(raw):
                 est_pct = float(m.group(1))
             date_cell = row[ih["date"]] if "date" in ih else ""
             status = (row[ih["status"]] or "").strip().lower()
-            updated = row[ih.get("last updated", 7)] if len(row) > ih.get("last updated", 7) else ""
+            updated_col = ih.get("last updated", 7)
+            updated = row[updated_col] if updated_col < len(row) else ""
             row_list.append({
                 "name": name, "slug": slug, "gmp": gmp,
                 "trend": trend_cell, "band": band, "est": est,
@@ -180,25 +207,38 @@ def parse_sub(raw):
         if not table:
             continue
         header = table[0]
-        ih = {h.lower(): i for i, h in enumerate(header)}
-        if "ipo" not in ih or "type" not in ih:
+        name_col = find_col(header, "ipo name", "ipo")
+        type_col = find_col(header, "type", "segment", "category", "ipo type")
+        if name_col is None or type_col is None:
             continue
+        close_col = find_col(header, "closing date", "closing", "close")
+        qib_col = find_col(header, "qib")
+        nii_col = find_col(header, "nii")
+        retail_col = find_col(header, "retail")
+        total_col = find_col(header, "total")
+        updated_col = find_col(header, "last updated", "updated")
+        max_col = max(c for c in (name_col, type_col, close_col, qib_col, nii_col,
+                                  retail_col, total_col, updated_col) if c is not None)
         for row in table[1:]:
-            if len(row) <= max(ih.values()):
+            if len(row) <= max_col:
                 continue
-            name = row[ih["ipo"]]
+            name = row[name_col]
             if not name:
                 continue
             row_obj = {
-                "type": row[ih["type"]],
-                "close": row[ih.get("closing date", 2)] if "closing date" in ih else "",
-                "qib": first_number(row[ih.get("qib (x)", 3)]) if "qib (x)" in ih else None,
-                "nii": first_number(row[ih.get("nii (x)", 4)]) if "nii (x)" in ih else None,
-                "retail": first_number(row[ih.get("retail (x)", 5)]) if "retail (x)" in ih else None,
-                "total": first_number(row[ih.get("total (x)", 6)]) if "total (x)" in ih else None,
-                "updated": row[ih.get("last updated", 7)] if len(row) > 7 else "",
+                "type": row[type_col],
+                "close": row[close_col] if close_col is not None else "",
+                "qib": first_number(row[qib_col]) if qib_col is not None else None,
+                "nii": first_number(row[nii_col]) if nii_col is not None else None,
+                "retail": first_number(row[retail_col]) if retail_col is not None else None,
+                "total": first_number(row[total_col]) if total_col is not None else None,
+                "updated": row[updated_col] if updated_col is not None else "",
             }
-            sub[normalize_name(name)] = row_obj
+            key = normalize_name(name)
+            sub[key] = row_obj
+            base = base_name(key)
+            if base and base != key and base not in sub:
+                sub[base] = row_obj
         break
     return sub
 
@@ -348,6 +388,19 @@ def build():
     if sub is None:
         sub = {}
 
+    # Last-known per-IPO subscription figures from the previous snapshot, used
+    # when the fresh subscription page is unavailable or a live IPO is briefly
+    # missing from it, so the output JSON keeps responding with its subs.
+    prev_sub = {}
+    if cached_record and isinstance(cached_record.get("ipos"), list):
+        for prev in cached_record["ipos"]:
+            if not isinstance(prev, dict):
+                continue
+            ps = prev.get("sub")
+            if isinstance(ps, dict) and ps.get("total"):
+                prev_sub[prev.get("slug")] = ps
+    used_cached_sub = False
+
     base_year = date.today().year
     kept = []
     for row in gmp:
@@ -401,7 +454,12 @@ def build():
         entry = detail_cache.get(slug, {})
         detail = entry.get("detail")
 
-        sub_row = sub.get(normalize_name(row["name"])) or {}
+        name_key = normalize_name(row["name"])
+        sub_row = sub.get(name_key) or {}
+        if not sub_row:
+            base = base_name(name_key)
+            if base and base != name_key:
+                sub_row = sub.get(base) or {}
 
         # Mainboard filter.
         if not slug:
@@ -413,6 +471,23 @@ def build():
             continue
         elif row["band"] is None:
             continue
+
+        # Subscription fallback: if the fresh page yielded nothing for this row,
+        # reuse the last-known figures for a live/closed IPO, so the bars in the
+        # panel never vanish mid-session. The cached "updated" timestamp keeps
+        # any staleness visible.
+        if not sub_row.get("total") and row["kind"] in ("live", "closed"):
+            prev = prev_sub.get(slug)
+            if prev:
+                sub_row = {
+                    "qib": prev.get("qib"),
+                    "nii": prev.get("nii"),
+                    "retail": prev.get("retail"),
+                    "total": prev.get("total"),
+                    "close": prev.get("close", ""),
+                    "updated": prev.get("updated", ""),
+                }
+                used_cached_sub = True
 
         if detail:
             open_iso = iso_of(detail.get("open"))
@@ -482,7 +557,10 @@ def build():
     ipos.sort(key=sort_key)
 
     if not error and (gmp_raw is None or sub_raw is None):
-        error = "Partial data (subscription page unavailable)" if sub_raw is None else ""
+        if sub_raw is None:
+            error = ("Partial data (subscription page unavailable, "
+                     "showing cached subscription data)" if used_cached_sub
+                     else "Partial data (subscription page unavailable)")
 
     out = {
         "status": "ok",
